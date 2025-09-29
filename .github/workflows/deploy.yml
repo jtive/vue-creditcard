@@ -1,0 +1,106 @@
+name: Deploy Vue.js Personal Info System to AWS ECR
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY_VUE: personal-info-vue
+  VUE_SERVICE_NAME: personal-info-vue
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run type check
+        run: npm run type-check
+      
+      - name: Build Vue application
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: https://mhadxupkmr.us-east-2.awsapprunner.com/api
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Create ECR repository
+        run: |
+          # Create Vue repository
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY_VUE --region $AWS_REGION || \
+          aws ecr create-repository --repository-name $ECR_REPOSITORY_VUE --region $AWS_REGION
+          
+          # Set repository policy to allow App Runner access
+          ROLE_ARN="arn:aws:iam::486151888818:role/AppRunnerECRAccessRole2"
+          
+          # Vue repository policy
+          aws ecr set-repository-policy \
+            --repository-name $ECR_REPOSITORY_VUE \
+            --region $AWS_REGION \
+            --policy-text '{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "AppRunnerAccess",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": "'$ROLE_ARN'"
+                  },
+                  "Action": [
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "ecr:BatchCheckLayerAvailability"
+                  ]
+                }
+              ]
+            }' || echo "Vue repository policy already set"
+      
+      - name: Build and push Vue Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build and push Vue image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_VUE:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_VUE:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_VUE:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_VUE:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_VUE:latest
+      
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Vue.js Application Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** \`$ECR_REGISTRY/$ECR_REPOSITORY_VUE:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** \`$ECR_REGISTRY/$ECR_REPOSITORY_VUE:$IMAGE_TAG\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create/update your App Runner service using this image" >> $GITHUB_STEP_SUMMARY
+          echo "2. Configure the service to use port 80" >> $GITHUB_STEP_SUMMARY
+          echo "3. Set environment variables if needed" >> $GITHUB_STEP_SUMMARY
+          echo "4. The Vue app will connect to your API at: \`https://mhadxupkmr.us-east-2.awsapprunner.com/api\`" >> $GITHUB_STEP_SUMMARY
