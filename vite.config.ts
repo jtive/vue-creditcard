@@ -14,7 +14,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://mhadxupkmr.us-east-2.awsapprunner.com',
+        target: 'https://7wbr3un5gu.us-east-2.awsapprunner.com',
         changeOrigin: true,
         secure: true
       }

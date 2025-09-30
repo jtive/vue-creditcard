@@ -20,7 +20,7 @@ class ApiService {
     // Use proxy in development, direct URL in production
     const baseURL = import.meta.env.DEV 
       ? '/api' 
-      : 'https://mhadxupkmr.us-east-2.awsapprunner.com/api';
+      : 'https://7wbr3un5gu.us-east-2.awsapprunner.com/api';
       
     this.api = axios.create({
       baseURL,

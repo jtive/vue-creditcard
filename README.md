@@ -60,7 +60,7 @@ The built files will be in the `dist` directory.
 ## API Integration
 
 The application connects to the .NET WebAPI at:
-`https://mhadxupkmr.us-east-2.awsapprunner.com/api`
+`https://7wbr3un5gu.us-east-2.awsapprunner.com/api`
 
 ### Available Endpoints
 

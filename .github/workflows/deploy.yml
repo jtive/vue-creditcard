@@ -42,7 +42,7 @@ jobs:
           export NODE_OPTIONS="--openssl-legacy-provider"
           npm run build
         env:
-          VITE_API_BASE_URL: https://mhadxupkmr.us-east-2.awsapprunner.com/api
+          VITE_API_BASE_URL: https://7wbr3un5gu.us-east-2.awsapprunner.com/api
           NODE_OPTIONS: "--openssl-legacy-provider"
       
       - name: Configure AWS credentials
@@ -110,4 +110,4 @@ jobs:
           echo "1. Create/update your App Runner service using this image" >> $GITHUB_STEP_SUMMARY
           echo "2. Configure the service to use port 80" >> $GITHUB_STEP_SUMMARY
           echo "3. Set environment variables if needed" >> $GITHUB_STEP_SUMMARY
-          echo "4. The Vue app will connect to your API at: \`https://mhadxupkmr.us-east-2.awsapprunner.com/api\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. The Vue app will connect to your API at: \`https://7wbr3un5gu.us-east-2.awsapprunner.com/api\`" >> $GITHUB_STEP_SUMMARY
